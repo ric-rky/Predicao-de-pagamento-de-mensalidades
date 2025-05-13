@@ -77,4 +77,4 @@ Os modelos foram avaliados com base em métricas como **AUC**, **recall**, **F1-
 
 ##
 
-Notebook principal: [`teste_principia.ipynb`](https://github.com/ric-rky/teste_principia/blob/main/teste_principia.ipynb)
+Notebook principal: [`teste_principia.ipynb`](https://github.com/ric-rky/Predicao-de-pagamento-de-mensalidades/blob/main/predicao_mensalidades.ipynb)
