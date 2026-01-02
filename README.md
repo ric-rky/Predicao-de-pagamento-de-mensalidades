@@ -74,7 +74,7 @@ All available actions are ranked according to their predicted effectiveness.
 Collection actions have different operational costs.  
 The system optionally computes **expected return**:
 
-$\text{Expected Return} = P(\text{payment}) * \text{installment value} − {action cost}$
+$\text{Expected Return} = P(\text{payment}) * \text{installment value} − \text{action cost}$
 
 
 Monetary values are treated as **business parameters**, not as dataset features, reflecting real-world operational settings.
