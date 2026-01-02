@@ -1,31 +1,44 @@
-# Modelagem Supervisionada para Predição de Pagamento de Mensalidades
+# Supervised Modeling for Tuition Payment Prediction
 
-Este projeto tem como objetivo construir um modelo preditivo capaz de **estimar a probabilidade** de pagamento de uma mensalidade por parte de um aluno após a realização de uma ação de cobrança. Os dados utilizados compreendem um histórico de mensalidades e as ações de cobrança realizadas por uma empresa responsável por esse processo em certas faculdades privadas.
+This project aims to build a predictive system capable of **estimating the probability of tuition payment** after a specific collection action is applied.  
+The dataset contains historical tuition records and collection actions performed by a company responsible for managing payments for private higher education institutions.
 
-## 1. Objetivo do Projeto
+Beyond pure prediction, the project evolves into an **AI-assisted decision-support system**, recommending the most effective and cost-efficient collection actions.
 
-O objetivo central é oferecer modelos que auxiliem na tomada de decisão, permitindo à empresa:
+---
 
-- Identificar alunos com maior ou menor probabilidade de efetuar o pagamento;
-- Priorizar os casos com maior risco de inadimplência;
-- Evitar ações de cobrança desnecessárias com alunos que provavelmente irão pagar;
-- Otimizar os recursos de cobrança de forma mais estratégica.
+## 1. Project Objective
 
-## 2. Associação entre Ações de Cobrança e Mensalidades
+The main goal is to support operational and strategic decision-making by enabling the company to:
 
-Como os dados de cobrança não continham um identificador direto de vínculo com as mensalidades, foi desenvolvida uma regra de associação temporal. Para cada ação de cobrança, buscou-se a mensalidade do mesmo aluno com data de vencimento mais próxima da data da ação, dentro de uma janela de até 10 dias. Em caso de múltiplas possibilidades, foi escolhida a com menor diferença absoluta.
+- Estimate the probability of payment after a collection action;
+- Identify students with higher risk of non-payment;
+- Prioritize cases requiring stronger intervention;
+- Avoid unnecessary collection actions for students likely to pay;
+- Optimize collection resources under cost constraints.
 
-Essa associação permitiu criar um novo conjunto de dados, no qual cada linha representa uma ação de cobrança associada a uma mensalidade específica, contendo variáveis como:
+---
 
-- `acao_cobranca` (tipo de ação realizada);
-- `dias_dif` (diferença em dias entre a ação e o vencimento da mensalidade);
-- `foi_pago` (variável-alvo que indica se a mensalidade foi paga, sendo 1 para pagamento, 0 para não pagamento).
+## 2. Linking Collection Actions to Tuition Installments
 
-## 3. Resultados
+Since the collection dataset did not contain a direct identifier linking actions to tuition installments, a **temporal matching rule** was developed.
 
-Foram avaliados os seguintes modelos de classificação:
+For each collection action, the tuition installment belonging to the same student with the closest due date was selected, within a **±10-day window**.  
+When multiple candidates existed, the installment with the smallest absolute time difference was chosen.
 
-- Regressão Logística  
+This process produced a new dataset where **each row represents a collection action applied to a specific tuition installment**, including:
+
+- `acao_cobranca` — type of collection action;
+- `dias_dif` — difference (in days) between the action date and the installment due date;
+- `foi_pago` — target variable indicating whether the installment was paid (1 = paid, 0 = not paid).
+
+---
+
+## 3. Modeling Results
+
+Several classification models were evaluated, including:
+
+- Logistic Regression  
 - Decision Tree  
 - Random Forest  
 - XGBoost  
@@ -34,47 +47,115 @@ Foram avaliados os seguintes modelos de classificação:
 - Naive Bayes  
 - KNN  
 
-Os modelos foram avaliados com base em métricas como **AUC**, **recall**, **F1-score** e **acurácia balanceada**, considerando diferentes objetivos estratégicos.
+Models were compared using **AUC**, **recall**, **F1-score**, and **balanced accuracy**, depending on different business objectives.
 
-| Objetivo                                 | Modelo               | Destaques                                      |
-|------------------------------------------|----------------------|-----------------------------------------------|
-| Prever quem irá pagar (`foi_pago = 1`)    | Regressão Logística / Naive Bayes | Recall: 0.83, F1-score: 0.70       |
-| Estimar probabilidades                   | XGBoost / LightGBM   | AUC ≈ 0.65, bom equilíbrio geral              |
-| Identificar inadimplência (`foi_pago = 0`) | Random Forest        | Recall: 0.68, F1-score: 0.60                 |
+| Objective                               | Model                        | Highlights                               |
+|----------------------------------------|------------------------------|------------------------------------------|
+| Predict payment (`foi_pago = 1`)        | Logistic Regression / Naive Bayes | Recall ≈ 0.83, F1-score ≈ 0.70 |
+| Probability estimation                 | XGBoost / LightGBM           | AUC ≈ 0.65, good overall balance          |
+| Identify non-payment (`foi_pago = 0`)  | Random Forest                | Recall ≈ 0.68, F1-score ≈ 0.60             |
 
-## 4. Estratégias de Modelagem
+---
 
-- Análise exploratória dos dados;
-- Regra de associação entre ações e mensalidades;
-- Criação de features a partir de atributos temporais e de ação;
-- Treinamento e comparação de modelos preditivos;
-- Interpretação dos resultados conforme o foco da empresa (pagamento ou inadimplência).
+## 4. AI-Assisted Decision Strategy
 
-## 5. Ferramentas Utilizadas
+Instead of stopping at prediction, the project was extended into a **decision-support framework**, including:
 
-- Python 3.10;
-- Jupyter Notebook, com execução via VSCode;
-- Bibliotecas:
-  - `pandas` e `numpy` para manipulação e análise de dados;
-  - `matplotlib` e `seaborn` para visualização;
-  - `scikit-learn`, `xgboost` e `lightgbm` para modelagem preditiva.
+### 🔹 Next Best Action (NBA)
+For a given scenario (e.g., number of days past due), the system estimates:
 
-## 6. Possíveis Melhorias
+> **P(payment | collection action)**
 
-- Aplicação de validação cruzada para maior robustez;
-- Uso de técnicas como SMOTE ou ADASYN para balancear as classes;
-- Ajuste de limiares de decisão com base em métricas específicas;
-- Calibração das probabilidades previstas pelos modelos;
-- Testes com novos atributos e algoritmos como SVM ou CatBoost.
+All available actions are ranked according to their predicted effectiveness.
 
-## Autor
+---
 
-**Ricardo Luís Bertolucci Filho**  
+### 🔹 Cost-Aware Expected Return
+Collection actions have different operational costs.  
+The system optionally computes **expected return**:
+
+$\text{Expected Return} = P(\text{payment}) * \text{installment value} − {action cost}$
+
+
+Monetary values are treated as **business parameters**, not as dataset features, reflecting real-world operational settings.
+
+---
+
+### 🔹 Policy Simulation Over Time
+For different levels of delinquency (`dias_dif`), the system simulates an **optimal collection policy**, selecting the action that maximizes expected return at each stage.
+
+This allows decision-makers to define **data-driven collection strategies**, rather than isolated, ad-hoc actions.
+
+---
+
+### 🔹 Model Explainability
+To ensure transparency and trust, SHAP-based explainability is used to show:
+
+- Which factors increase or decrease the probability of payment;
+- Why a specific action is recommended in a given scenario.
+
+---
+
+## 5. Interactive Dashboard (Streamlit App)
+
+An interactive **Streamlit dashboard** was developed to demonstrate the system as a real decision-support tool.
+
+The app allows users to:
+- Select the number of days past due;
+- View the ranking of collection actions;
+- Compare actions by probability and expected return;
+- Visualize the optimal policy over time;
+- Inspect model explanations.
+
+This transforms the project from a notebook-based analysis into a **product-oriented prototype**.
+
+---
+
+## 6. Modeling Workflow
+
+- Exploratory data analysis;
+- Temporal matching between actions and installments;
+- Feature engineering based on action type and timing;
+- Training and comparison of multiple classifiers;
+- Probability calibration for decision-making;
+- Integration of AI-assisted ranking and policy simulation.
+
+---
+
+## 7. Tools and Technologies
+
+- Python 3.10  
+- Jupyter Notebook (VS Code)  
+- Streamlit (interactive dashboard)  
+- Libraries:
+  - `pandas`, `numpy`
+  - `matplotlib`, `seaborn`
+  - `scikit-learn`, `xgboost`, `lightgbm`
+  - `shap`
+
+---
+
+## 8. Possible Improvements
+
+- Cross-validation for increased robustness;
+- Advanced imbalance handling (SMOTE, ADASYN);
+- Decision threshold optimization;
+- Uplift modeling for action-effect estimation;
+- Contextual bandit approaches for sequential decision-making;
+- Integration with real-time systems.
+
+---
+
+## Author
+
+**Ricardo Luís Bertolucci Filho**
 
 - [LinkedIn](https://www.linkedin.com/in/ricardo-lu%C3%ADs-bertolucci-filho/)
-- [GitHub](https://github.com/ric-rky/ric-rky)
-- E-mail: bertolucci.rl@gmail.com
+- [GitHub](https://github.com/ric-rky)
+- Email: bertolucci.rl@gmail.com
 
-##
+---
 
-Notebook principal: [`teste_principia.ipynb`](https://github.com/ric-rky/Predicao-de-pagamento-de-mensalidades/blob/main/predicao_mensalidades.ipynb)
+## Main Notebook
+
+- [`predicao_mensalidades.ipynb`](https://github.com/ric-rky/Predicao-de-pagamento-de-mensalidades/blob/main/predicao_mensalidades.ipynb)
